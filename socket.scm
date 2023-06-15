@@ -69,7 +69,7 @@
     ssize_t))
 
 (define c-write
-  (foreign-procedure "c_write" (int u8* size_t ssize_t)
+  (foreign-procedure "c_write" (int utf-8 ssize_t ssize_t)
     ssize_t))
 
 (define connect

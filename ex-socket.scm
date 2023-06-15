@@ -23,17 +23,17 @@
         (check 'close (close server-socket)))))
 
 (define put ; procedure to send data to client
-  (lambda (x)
-    (let ([s (format "~s~%" x)])
-      (c-write client-socket s (string-length s)))
-    (void)))
+    (lambda (x)
+      (let ([s (format "~s~%" x)])
+        (c-write client-socket s 0 (string-length s)))
+      (void)))
 
 (define get ; procedure to read data from client
-  (let ([buff (make-string 1024)])
-    (lambda ()
-      (let ([n (c-read client-socket buff (string-length buff))])
-        (printf "client:~%~a~%server:~%" (substring buff 0 n))))))
-
+    (let ([buff (make-bytevector 1024 0)])
+      (lambda ()
+        (let ([n (c-read client-socket buff 0 (bytevector-length buff))])
+          (let ([r (list->string (map integer->char (bytevector->u8-list buff)))])
+            (printf "client:~%~a~%server:~%" (substring r 0 n)))))))
 ;; (get)
 ;; server:
 (put '(let ([x 3]) x))
