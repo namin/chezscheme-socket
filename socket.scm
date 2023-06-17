@@ -1,4 +1,16 @@
+;;; socket.ss
+;;; R. Kent Dybvig May 1998
+;;; Updated November 2005
+;;; Updated by Jamie Taylor, Sept 2016
+;;; Public Domain
+;;;
+;;; bindings for socket operations and other items useful for writing
+;;; programs that use sockets.
+
 ;;; Requires csocket.so, built from csocket.c.
+;;; Example compilation command line from macOS:
+;;;  cc -c csocket.c -o csocket.o
+;;;  cc csocket.o -dynamic -dynamiclib -current_version 1.0 -compatibility_version 1.0 -o csocket.so
 (load-shared-object "./csocket.so")
 
 ;;; Requires from C library:
@@ -69,7 +81,7 @@
     ssize_t))
 
 (define c-write
-  (foreign-procedure "c_write" (int utf-8 ssize_t ssize_t)
+  (foreign-procedure "c_write" (int u8* size_t ssize_t)
     ssize_t))
 
 (define connect
@@ -136,3 +148,31 @@
     (define sigterm 15)
     (kill pid sigterm)
     (void)))
+
+(define open-process
+  (lambda (command)
+    (define (make-r! socket)
+      (lambda (bv start n)
+        (check 'r! (c-read socket bv start n))))
+    (define (make-w! socket)
+      (lambda (bv start n)
+        (check 'w! (c-write socket bv start n))))
+    (define (make-close pid socket)
+      (lambda ()
+        (check 'close (close socket))
+        (terminate-process pid)))
+    (let* ([server-socket-name (tmpnam 0)]
+           [server-socket (setup-server-socket server-socket-name)])
+      (dofork 
+        (lambda () ; child
+          (check 'close (close server-socket))
+          (let ([sock (setup-client-socket server-socket-name)])
+            (dodup 0 sock)
+            (dodup 1 sock))
+          (check 'execl (execl4 "/bin/sh" "/bin/sh" "-c" command))
+          (error 'open-process "subprocess exec failed"))
+        (lambda (pid) ; parent
+          (let ([sock (accept-socket server-socket)])
+            (check 'close (close server-socket))
+            (make-custom-binary-input/output-port command
+              (make-r! sock) (make-w! sock) #f #f (make-close pid sock))))))))

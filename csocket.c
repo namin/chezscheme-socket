@@ -1,3 +1,9 @@
+/*/ csocket.c
+R. Kent Dybvig May 1998
+Updated by Jamie Taylor, Sept 2016
+Public Domain
+/*/
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -95,4 +101,3 @@ char* get_error(void) {
     extern int errno;
     return strerror(errno);
 }
-
