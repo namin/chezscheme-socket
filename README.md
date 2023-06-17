@@ -8,5 +8,3 @@ To avoid the error
 - When using `c-read`, I need to pass in a mutable buffer, so I do that in the client code.
 
 - In the client code, I provide the start parameter as 0 both when calling `c-write` and `c-read`.
-
-I also commented out the first `get`, which seems blocking.
